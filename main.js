@@ -1,90 +1,137 @@
-class TextareaVirtualized extends HTMLTextAreaElement {
-  ROWS = 15
-  MARGINS = 5
-  above = []
-  lines = []
-  bottom = []
-  lineHeight = 0
-  previousScrollTop = 0
+const LINE_COUNTS = 100000
+
+class TextareaVirtualized extends HTMLElement {
+  ROWS = 30
+  ROWS_MAG = 10 // > 1.0
+  MARGINS_MAG = 2 // > 1.0
+  MARGINS = 10
+  LINE_HEIGHT = 1.2 // rem
 
   constructor () {
     super()
-    this.style.setProperty('resize', 'none')
-    this.setAttribute('rows', this.ROWS)
 
-    // const _lines = this.value.split('\n')
-    const _lines = new Array(100).fill('').map((_, i) => i.toString().padStart(4, '0'))
+    this.shadow = this.attachShadow({mode: 'open'})
+    const style = document.createElement('style')
+    style.textContent = `
+      * {
+        padding: 0;
+        margin: 0;
+        resize: none;
+        border: none;
+        outline: none;
+      }
 
-    this.above = []
-    this.lines = _lines.splice(0, this.ROWS + this.MARGINS)
-    this.bottom = _lines
+      #container {
+        overflow-x: hidden;
+        overflow-y: scroll;
+        border: solid 1px black;
+        height: ${this.ROWS * this.LINE_HEIGHT}rem;
+      }
 
-    this.lineHeight = Math.floor(this.getBoundingClientRect().height / this.ROWS)
-    this.value = this.lines.join('\n')
-    this.onScroll = this.onScroll.bind(this)
-    this.previousScrollTop = this.scrollTop
-    this.addEventListener('scroll', this.onScroll)
+      #container::-webkit-scrollbar {
+        display: none;
+      }
+
+      textarea {
+        width: 100%;
+        overflow: hidden;
+        vertical-align: top;
+      }
+
+      #upper {
+        background-color: rgba(255, 0, 0, 0.1);
+      }
+
+      #middle {
+        background-color: rgba(0, 255, 0, 0.1);
+      }
+
+      #lower {
+        background-color: rgba(0, 0, 255, 0.1);
+      }
+    `
+    this.shadow.appendChild(style)
+
+    this.container = document.createElement('div')
+    this.container.setAttribute('id', 'container')
+    this.shadow.appendChild(this.container)
+
+    this.upper = document.createElement('textarea')
+    this.upper.setAttribute('id', 'upper')
+    this.upper.setAttribute('rows', this.MARGINS)
+    this.container.appendChild(this.upper)
+
+    this.middle = document.createElement('textarea')
+    this.middle.setAttribute('id', 'middle')
+    this.middle.setAttribute('rows', this.ROWS * this.ROWS_MAG)
+    this.container.appendChild(this.middle)
+
+    this.lower = document.createElement('textarea')
+    this.lower.setAttribute('id', 'lower')
+    this.lower.setAttribute('rows', this.MARGINS)
+    this.container.appendChild(this.lower)
+
+    // const lines = this.value.split('\n')
+    const padLength = Math.log10(LINE_COUNTS) + 1
+    const lines = new Array(LINE_COUNTS).fill('').map((_, i) => i.toString().padStart(padLength, '0'))
+
+    const upperLines = lines.splice(0, this.MARGINS)
+    const middleLines = lines.splice(0, this.ROWS * this.ROWS_MAG)
+    const lowerLines = lines.splice(0, this.MARGINS)
+    this.topVirtualizedLines = []
+    this.bottomVirtualizedLines = lines
+
+    this.upper.value = upperLines.join('\n')
+    this.middle.value = middleLines.join('\n')
+    this.lower.value = lowerLines.join('\n')
+
+    this.upperTextareaIntersectionObserver = new IntersectionObserver(this.upperIntersectionCallback.bind(this), { root: this.container })
+    this.lowerTextareaIntersectionObserver = new IntersectionObserver(this.lowerIntersectionCallback.bind(this), { root: this.container })
   }
 
-  onScroll(event) {
-    if (this.scrollTop === this.previousScrollTop) return
-    const direction = this.scrollTop < this.previousScrollTop ? 'UP' : 'DOWN'
-    this.previousScrollTop = this.scrollTop
-
-    if (direction === 'UP') {
-      // scroll up
-      if (Math.floor(this.scrollTop / this.lineHeight) > 0) return
-
-      if (this.above.length <= 0) {
-        return
-      } else if (this.above.length < this.MARGINS) {
-        const len = this.above.length
-        this.lines = this.above.concat(this.value.split('\n'))
-        this.above = []
-        this.bottom = this.lines.splice(-len, len).concat(this.bottom)
-        this.value = this.lines.join('\n')
-        this.previousScrollTop = this.lineHeight * (len + 1)
-        this.scrollTo({
-          top: this.lineHeight * (len + 1)
-        })
-      } else {
-        const len = this.MARGINS - 1
-        this.lines = this.above.splice(-len, len).concat(this.value.split('\n'))
-        this.bottom = this.lines.splice(-len, len).concat(this.bottom)
-        this.value = this.lines.join('\n')
-        this.previousScrollTop += this.lineHeight * (len + 1)
-        this.scrollTo({
-          top: this.scrollTop + this.lineHeight * (len + 1)
-        })
-      }
-    } else {
-      // scroll down
-      if (Math.ceil(this.scrollTop / this.lineHeight) < this.MARGINS) return
-
-      if (this.bottom.length <= 0) {
-        return
-      } else if (this.bottom.length < this.MARGINS) {
-        const len = this.bottom.length
-        this.lines = this.value.split('\n').concat(this.bottom)
-        this.bottom = []
-        this.above = this.above.concat(this.lines.splice(0, len))
-        this.value = this.lines.join('\n')
-        this.previousScrollTop = 0
-        this.scrollTo({
-          top: 0
-        })
-      } else {
-        const len = this.MARGINS - 1
-        this.lines = this.value.split('\n').concat(this.bottom.splice(0, len))
-        this.above = this.above.concat(this.lines.splice(0, len))
-        this.value = this.lines.join('\n')
-        this.previousScrollTop -= this.lineHeight * (len + 1)
-        this.scrollTo({
-          top: this.scrollTop - this.lineHeight * (len + 1)
-        })
-      }
+  upperIntersectionCallback(entries) {
+    for (const entry of entries) {
+      if (!entry.isIntersecting) return
+      if (this.topVirtualizedLines.length === 0) return
+      const lines = this.topVirtualizedLines.splice(-this.MARGINS * 2, this.MARGINS * 2).concat(
+        this.upper.value.split('\n'),
+        this.middle.value.split('\n'),
+        this.lower.value.split('\n')
+      )
+      this.upper.value = lines.splice(0, this.MARGINS).join('\n')
+      this.middle.value = lines.splice(0, this.ROWS * this.ROWS_MAG).join('\n')
+      this.lower.value = lines.splice(0, this.MARGINS).join('\n')
+      this.bottomVirtualizedLines = lines.concat(this.bottomVirtualizedLines)
+      this.container.scrollBy(0, entry.boundingClientRect.height * 2)
     }
+  }
+
+  lowerIntersectionCallback(entries) {
+    for (const entry of entries) {
+      if (!entry.isIntersecting) return
+      if (this.bottomVirtualizedLines.length === 0) return
+      const lines = [].concat(
+        this.upper.value.split('\n'),
+        this.middle.value.split('\n'),
+        this.lower.value.split('\n'),
+        this.bottomVirtualizedLines.splice(0, this.MARGINS * 2)
+      )
+      this.lower.value = lines.splice(-this.MARGINS, this.MARGINS).join('\n')
+      this.middle.value = lines.splice(-this.ROWS * this.ROWS_MAG, this.ROWS * this.ROWS_MAG).join('\n')
+      this.upper.value = lines.splice(-this.MARGINS, this.MARGINS).join('\n')
+      this.topVirtualizedLines = this.topVirtualizedLines.concat(lines)
+      this.container.scrollBy(0, -entry.boundingClientRect.height * 2)
+    }
+  }
+
+  connectedCallback() {
+    this.upperTextareaIntersectionObserver.observe(this.upper)
+    this.lowerTextareaIntersectionObserver.observe(this.lower)
   }
 }
 
-customElements.define('textarea-virtualized', TextareaVirtualized, { extends: 'textarea' })
+customElements.define('textarea-virtualized', TextareaVirtualized)
+
+const padLength = Math.log10(LINE_COUNTS) + 1
+const lines = new Array(LINE_COUNTS).fill('').map((_, i) => i.toString().padStart(padLength, '0'))
+document.getElementById('textarea-original').value = lines.join('\n')
