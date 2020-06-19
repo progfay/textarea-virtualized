@@ -87,6 +87,8 @@ class TextareaVirtualized extends HTMLElement {
 
     this.upperTextareaIntersectionObserver = new IntersectionObserver(this.upperIntersectionCallback.bind(this), { root: this.container })
     this.lowerTextareaIntersectionObserver = new IntersectionObserver(this.lowerIntersectionCallback.bind(this), { root: this.container })
+
+    this.upper.addEventListener('keypress', this.onKeyPressInUpper.bind(this))
   }
 
   upperIntersectionCallback(entries) {
@@ -127,6 +129,30 @@ class TextareaVirtualized extends HTMLElement {
   connectedCallback() {
     this.upperTextareaIntersectionObserver.observe(this.upper)
     this.lowerTextareaIntersectionObserver.observe(this.lower)
+  }
+
+  onKeyPressInUpper(event) {
+    const upperText = this.upper.value
+    const aheadText = upperText.substring(0, this.upper.selectionStart) + '\n'
+    const behindText = upperText.substring(this.upper.selectionStart) + '\n'
+    if (event.code === 'Enter') {
+      const aheadLineCount = aheadText.match(/\n/g).length
+      const behindLineCount = behindText.match(/\n/g).length
+      if (aheadLineCount + behindLineCount > this.MARGINS) {
+        if (aheadLineCount >= this.MARGINS) {
+          let deliminatorIndex = -1
+          for (let i = 0; i < this.MARGINS; i++) { deliminatorIndex = aheadText.indexOf('\n', deliminatorIndex + 1) }
+          this.upper.value = aheadText.substring(0, deliminatorIndex)
+          this.middle.value = upperText.substring(deliminatorIndex) + '\n' + this.middle.value
+        } else {
+          let deliminatorIndex = -1
+          for (let i = 0; i < (this.MARGINS - aheadLineCount); i++) { deliminatorIndex = behindText.indexOf('\n', deliminatorIndex + 1) }
+          this.upper.value = aheadText + behindText.substring(0, deliminatorIndex)
+          this.middle.value = behindText.substring(deliminatorIndex + 1) + this.middle.value
+        }
+        event.preventDefault()
+      }
+    }
   }
 }
 
