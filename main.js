@@ -89,6 +89,8 @@ class TextareaVirtualized extends HTMLElement {
     this.lowerTextareaIntersectionObserver = new IntersectionObserver(this.lowerIntersectionCallback.bind(this), { root: this.container })
 
     this.upper.addEventListener('keypress', this.onKeyPressInUpper.bind(this))
+
+    this.setCaretPosition = this.setCaretPosition.bind(this)
   }
 
   upperIntersectionCallback(entries) {
@@ -144,15 +146,27 @@ class TextareaVirtualized extends HTMLElement {
           for (let i = 0; i < this.MARGINS; i++) { deliminatorIndex = aheadText.indexOf('\n', deliminatorIndex + 1) }
           this.upper.value = aheadText.substring(0, deliminatorIndex)
           this.middle.value = upperText.substring(deliminatorIndex) + '\n' + this.middle.value
+          this.setCaretPosition(this.middle, 0)
         } else {
           let deliminatorIndex = -1
           for (let i = 0; i < (this.MARGINS - aheadLineCount); i++) { deliminatorIndex = behindText.indexOf('\n', deliminatorIndex + 1) }
+          const selectionStart = this.upper.selectionStart
           this.upper.value = aheadText + behindText.substring(0, deliminatorIndex)
           this.middle.value = behindText.substring(deliminatorIndex + 1) + this.middle.value
+          this.setCaretPosition(this.upper, selectionStart + 1)
         }
         event.preventDefault()
       }
     }
+  }
+
+  setCaretPosition(element, position) {
+    const scrollX = this.container.scrollX
+    const scrollY = this.container.scrollY
+    this.container.scrollTo(scrollX, scrollY)
+    element.selectionStart = position
+    element.selectionEnd = position
+    element.focus()
   }
 }
 
