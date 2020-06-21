@@ -1,16 +1,37 @@
-const LINE_COUNTS = 100000
+const LINE_COUNTS = 10000
+const padLength = Math.log10(LINE_COUNTS) + 1
+const text = new Array(LINE_COUNTS).fill('').map((_, i) => i.toString().padStart(padLength, '0')).join('\n')
+document.getElementById('textarea-original').value = text
+
+const indexOf = (text, target, count) => {
+  let index = -1
+    for (let i = 0; i < count; i++) {
+      index = text.indexOf(target, index + 1)
+      if (index === -1) return -1
+    }
+    return index
+}
+
+const lastIndexOf = (text, target, count) => {
+  let index = text.length
+    for (let i = 0; i < count; i++) {
+      index = text.lastIndexOf(target, index - 1)
+      if (index === -1) return -1
+    }
+    return index
+}
 
 class TextareaVirtualized extends HTMLElement {
   ROWS = 30
   ROWS_MAG = 10 // > 1.0
-  MARGINS_MAG = 2 // > 1.0
-  MARGINS = 10
-  LINE_HEIGHT = 1.2 // rem
+  MARGINS = 10 // < ROWS
+  MARGINS_MAG = 3 // > 1.0
+  LINE_HEIGHT = 1.2 // rem (default or callback)
 
   constructor () {
     super()
 
-    this.shadow = this.attachShadow({mode: 'open'})
+    this.shadow = this.attachShadow({mode: 'closed'})
     const style = document.createElement('style')
     style.textContent = `
       * {
@@ -32,22 +53,26 @@ class TextareaVirtualized extends HTMLElement {
         display: none;
       }
 
-      textarea {
+      #textarea {
         width: 100%;
         overflow: hidden;
         vertical-align: top;
       }
 
-      #upper {
-        background-color: rgba(255, 0, 0, 0.1);
+      #upper, #lower {
+        width: 100%;
+        height: 1px;
+        position: relative;
       }
 
-      #middle {
-        background-color: rgba(0, 255, 0, 0.1);
+      #upper {
+        top: calc(100% * ${this.MARGINS} / ${this.ROWS});
+        background-color: rgb(255, 0, 0);
       }
 
       #lower {
-        background-color: rgba(0, 0, 255, 0.1);
+        bottom: calc(100% * ${this.MARGINS} / ${this.ROWS});
+        background-color: rgb(0, 0, 255);
       }
     `
     this.shadow.appendChild(style)
@@ -56,122 +81,67 @@ class TextareaVirtualized extends HTMLElement {
     this.container.setAttribute('id', 'container')
     this.shadow.appendChild(this.container)
 
-    this.upper = document.createElement('textarea')
+    this.upper = document.createElement('div')
     this.upper.setAttribute('id', 'upper')
-    this.upper.setAttribute('rows', this.MARGINS)
     this.container.appendChild(this.upper)
 
-    this.middle = document.createElement('textarea')
-    this.middle.setAttribute('id', 'middle')
-    this.middle.setAttribute('rows', this.ROWS * this.ROWS_MAG)
-    this.container.appendChild(this.middle)
+    this.textarea = document.createElement('textarea')
+    this.textarea.setAttribute('id', 'textarea')
+    this.textarea.setAttribute('rows', this.ROWS * this.ROWS_MAG)
+    this.container.appendChild(this.textarea)
 
-    this.lower = document.createElement('textarea')
+    this.lower = document.createElement('div')
     this.lower.setAttribute('id', 'lower')
-    this.lower.setAttribute('rows', this.MARGINS)
     this.container.appendChild(this.lower)
 
-    // const lines = this.value.split('\n')
-    const padLength = Math.log10(LINE_COUNTS) + 1
-    const lines = new Array(LINE_COUNTS).fill('').map((_, i) => i.toString().padStart(padLength, '0'))
+    // const text = this.value
+    // const text = text // (use global variable)
 
-    const upperLines = lines.splice(0, this.MARGINS)
-    const middleLines = lines.splice(0, this.ROWS * this.ROWS_MAG)
-    const lowerLines = lines.splice(0, this.MARGINS)
-    this.topVirtualizedLines = []
-    this.bottomVirtualizedLines = lines
-
-    this.upper.value = upperLines.join('\n')
-    this.middle.value = middleLines.join('\n')
-    this.lower.value = lowerLines.join('\n')
+    const index = indexOf(text, '\n', this.ROWS * this.ROWS_MAG)
+    this.upperVirtualizedText = ''
+    this.textarea.value = text.substring(0, index)
+    this.lowerVirtualizedText = text.substring(index)
 
     this.upperTextareaIntersectionObserver = new IntersectionObserver(this.upperIntersectionCallback.bind(this), { root: this.container })
     this.lowerTextareaIntersectionObserver = new IntersectionObserver(this.lowerIntersectionCallback.bind(this), { root: this.container })
-
-    this.upper.addEventListener('keypress', this.onKeyPressInUpper.bind(this))
-
-    this.setCaretPosition = this.setCaretPosition.bind(this)
   }
 
   upperIntersectionCallback(entries) {
     for (const entry of entries) {
       if (!entry.isIntersecting) return
-      if (this.topVirtualizedLines.length === 0) return
-      const lines = this.topVirtualizedLines.splice(-this.MARGINS * 2, this.MARGINS * 2).concat(
-        this.upper.value.split('\n'),
-        this.middle.value.split('\n'),
-        this.lower.value.split('\n')
-      )
-      this.upper.value = lines.splice(0, this.MARGINS).join('\n')
-      this.middle.value = lines.splice(0, this.ROWS * this.ROWS_MAG).join('\n')
-      this.lower.value = lines.splice(0, this.MARGINS).join('\n')
-      this.bottomVirtualizedLines = lines.concat(this.bottomVirtualizedLines)
-      this.container.scrollBy(0, entry.boundingClientRect.height * 2)
+      if (this.upperVirtualizedText === '') return
+      const upperIndex = lastIndexOf(this.upperVirtualizedText, '\n', this.MARGINS * this.MARGINS_MAG)
+      const text = this.upperVirtualizedText.substring(upperIndex) + this.textarea.value
+      this.upperVirtualizedText = this.upperVirtualizedText.substring(0, upperIndex)
+      const index = indexOf(text, '\n', this.ROWS * this.ROWS_MAG)
+      this.textarea.value = text.substring(0, index)
+      this.lowerVirtualizedText = text.substring(index) + this.lowerVirtualizedText
+      this.container.scrollBy(0, this.LINE_HEIGHT * (this.MARGINS * this.MARGINS_MAG - 1))
+      return
     }
   }
 
   lowerIntersectionCallback(entries) {
     for (const entry of entries) {
       if (!entry.isIntersecting) return
-      if (this.bottomVirtualizedLines.length === 0) return
-      const lines = [].concat(
-        this.upper.value.split('\n'),
-        this.middle.value.split('\n'),
-        this.lower.value.split('\n'),
-        this.bottomVirtualizedLines.splice(0, this.MARGINS * 2)
-      )
-      this.lower.value = lines.splice(-this.MARGINS, this.MARGINS).join('\n')
-      this.middle.value = lines.splice(-this.ROWS * this.ROWS_MAG, this.ROWS * this.ROWS_MAG).join('\n')
-      this.upper.value = lines.splice(-this.MARGINS, this.MARGINS).join('\n')
-      this.topVirtualizedLines = this.topVirtualizedLines.concat(lines)
-      this.container.scrollBy(0, -entry.boundingClientRect.height * 2)
+      if (this.lowerVirtualizedText === '') return
+      const lowerIndex = indexOf(this.lowerVirtualizedText, '\n', this.MARGINS * this.MARGINS_MAG)
+      const text = this.textarea.value + this.lowerVirtualizedText.substring(0, lowerIndex)
+      this.lowerVirtualizedText = this.lowerVirtualizedText.substring(lowerIndex)
+      const index = lastIndexOf(text, '\n', this.ROWS * this.ROWS_MAG)
+      this.textarea.value = text.substring(index)
+      this.upperVirtualizedText = this.upperVirtualizedText + text.substring(0 ,index)
+      this.container.scrollBy(0, -1 * this.LINE_HEIGHT * (this.MARGINS * this.MARGINS_MAG - 1))
+      return
     }
   }
 
   connectedCallback() {
+    this.LINE_HEIGHT = this.textarea.getBoundingClientRect().height / (this.ROWS * this.ROWS_MAG)
+    this.container.style.setProperty('height', `${this.ROWS * this.LINE_HEIGHT}px`)
     this.upperTextareaIntersectionObserver.observe(this.upper)
     this.lowerTextareaIntersectionObserver.observe(this.lower)
-  }
-
-  onKeyPressInUpper(event) {
-    const upperText = this.upper.value
-    const aheadText = upperText.substring(0, this.upper.selectionStart) + '\n'
-    const behindText = upperText.substring(this.upper.selectionStart) + '\n'
-    if (event.code === 'Enter') {
-      const aheadLineCount = aheadText.match(/\n/g).length
-      const behindLineCount = behindText.match(/\n/g).length
-      if (aheadLineCount + behindLineCount > this.MARGINS) {
-        if (aheadLineCount >= this.MARGINS) {
-          let deliminatorIndex = -1
-          for (let i = 0; i < this.MARGINS; i++) { deliminatorIndex = aheadText.indexOf('\n', deliminatorIndex + 1) }
-          this.upper.value = aheadText.substring(0, deliminatorIndex)
-          this.middle.value = upperText.substring(deliminatorIndex) + '\n' + this.middle.value
-          this.setCaretPosition(this.middle, 0)
-        } else {
-          let deliminatorIndex = -1
-          for (let i = 0; i < (this.MARGINS - aheadLineCount); i++) { deliminatorIndex = behindText.indexOf('\n', deliminatorIndex + 1) }
-          const selectionStart = this.upper.selectionStart
-          this.upper.value = aheadText + behindText.substring(0, deliminatorIndex)
-          this.middle.value = behindText.substring(deliminatorIndex + 1) + this.middle.value
-          this.setCaretPosition(this.upper, selectionStart + 1)
-        }
-        event.preventDefault()
-      }
-    }
-  }
-
-  setCaretPosition(element, position) {
-    const scrollX = this.container.scrollX
-    const scrollY = this.container.scrollY
-    this.container.scrollTo(scrollX, scrollY)
-    element.selectionStart = position
-    element.selectionEnd = position
-    element.focus()
   }
 }
 
 customElements.define('textarea-virtualized', TextareaVirtualized)
-
-const padLength = Math.log10(LINE_COUNTS) + 1
-const lines = new Array(LINE_COUNTS).fill('').map((_, i) => i.toString().padStart(padLength, '0'))
-document.getElementById('textarea-original').value = lines.join('\n')
