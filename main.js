@@ -111,8 +111,8 @@ class TextareaVirtualized extends HTMLElement {
       if (!entry.isIntersecting) return
       if (this.upperVirtualizedText === '') return
       const upperIndex = lastIndexOf(this.upperVirtualizedText, '\n', this.MARGINS * this.MARGINS_MAG)
-      const text = this.upperVirtualizedText.substring(upperIndex) + this.textarea.value
-      this.upperVirtualizedText = this.upperVirtualizedText.substring(0, upperIndex)
+      const text = (upperIndex !== -1 ? this.upperVirtualizedText.substring(upperIndex) : this.upperVirtualizedText) + this.textarea.value
+      this.upperVirtualizedText = upperIndex !== -1 ? this.upperVirtualizedText.substring(0, upperIndex) : ''
       const index = indexOf(text, '\n', this.ROWS * this.ROWS_MAG)
       this.textarea.value = text.substring(0, index)
       this.lowerVirtualizedText = text.substring(index) + this.lowerVirtualizedText
@@ -126,8 +126,8 @@ class TextareaVirtualized extends HTMLElement {
       if (!entry.isIntersecting) return
       if (this.lowerVirtualizedText === '') return
       const lowerIndex = indexOf(this.lowerVirtualizedText, '\n', this.MARGINS * this.MARGINS_MAG)
-      const text = this.textarea.value + this.lowerVirtualizedText.substring(0, lowerIndex)
-      this.lowerVirtualizedText = this.lowerVirtualizedText.substring(lowerIndex)
+      const text = this.textarea.value + (lowerIndex !== -1 ? this.lowerVirtualizedText.substring(0, lowerIndex) : this.lowerVirtualizedText)
+      this.lowerVirtualizedText = lowerIndex !== -1 ? this.lowerVirtualizedText.substring(lowerIndex) : ''
       const index = lastIndexOf(text, '\n', this.ROWS * this.ROWS_MAG)
       this.textarea.value = text.substring(index)
       this.upperVirtualizedText = this.upperVirtualizedText + text.substring(0 ,index)
