@@ -116,7 +116,8 @@ class TextareaVirtualized extends HTMLElement {
       const index = indexOf(text, '\n', this.ROWS * this.ROWS_MAG)
       this.textarea.value = text.substring(0, index)
       this.lowerVirtualizedText = text.substring(index) + this.lowerVirtualizedText
-      this.container.scrollBy(0, this.LINE_HEIGHT * (this.MARGINS * this.MARGINS_MAG - 1))
+      this.container.scrollBy(0, this.LINE_HEIGHT * this.MARGINS * this.MARGINS_MAG)
+      this.textarea.scrollBy(0, -1 * this.LINE_HEIGHT)
       return
     }
   }
@@ -132,6 +133,7 @@ class TextareaVirtualized extends HTMLElement {
       this.textarea.value = text.substring(index)
       this.upperVirtualizedText = this.upperVirtualizedText + text.substring(0 ,index)
       this.container.scrollBy(0, -1 * this.LINE_HEIGHT * (this.MARGINS * this.MARGINS_MAG - 1))
+      this.textarea.scrollBy(0, this.LINE_HEIGHT)
       return
     }
   }
