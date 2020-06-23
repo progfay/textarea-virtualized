@@ -102,8 +102,13 @@ class TextareaVirtualized extends HTMLElement {
     this.textarea.value = text.substring(0, index)
     this.lowerVirtualizedText = text.substring(index)
 
+      this.selectionStart = 0
+      this.selectionEnd = 0
+
     this.upperTextareaIntersectionObserver = new IntersectionObserver(this.upperIntersectionCallback.bind(this), { root: this.container })
     this.lowerTextareaIntersectionObserver = new IntersectionObserver(this.lowerIntersectionCallback.bind(this), { root: this.container })
+
+    this.textarea.addEventListener('keydown', this.onKeyDown.bind(this))
   }
 
   upperIntersectionCallback(entries) {
@@ -135,6 +140,37 @@ class TextareaVirtualized extends HTMLElement {
       this.container.scrollBy(0, -1 * this.LINE_HEIGHT * (this.MARGINS * this.MARGINS_MAG - 1))
       this.textarea.scrollBy(0, this.LINE_HEIGHT)
       return
+    }
+  }
+
+  onKeyDown(event) {
+    switch (event.key) {
+      case 'ArrowUp':
+        if (event.metaKey) {
+          this.selectionStart = this.upperVirtualizedText.length + this.textarea.selectionStart
+          this.selectionEnd = this.upperVirtualizedText.length + this.textarea.selectionEnd
+          const text = this.upperVirtualizedText + this.textarea.value + this.lowerVirtualizedText
+          const index = indexOf(text, '\n', this.ROWS * this.ROWS_MAG)
+          this.textarea.value = index !== -1 ? text.substring(0, index) : text
+          this.upperVirtualizedText = ''
+          this.lowerVirtualizedText = index !== -1 ? text.substring(index) : ''
+        }
+        return
+
+      case 'ArrowDown':
+        if (event.metaKey) {
+          this.selectionStart = this.upperVirtualizedText.length + this.textarea.selectionStart
+          this.selectionEnd = this.upperVirtualizedText.length + this.textarea.selectionEnd
+          const text = this.upperVirtualizedText + this.textarea.value + this.lowerVirtualizedText
+          const index = lastIndexOf(text, '\n', this.ROWS * this.ROWS_MAG)
+          this.textarea.value = index !== -1 ? text.substring(index) : text
+          this.upperVirtualizedText = index !== -1 ? text.substring(0, index) : ''
+          this.lowerVirtualizedText = ''
+        }
+        return
+
+        default:
+        return
     }
   }
 
