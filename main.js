@@ -154,6 +154,14 @@ class TextareaVirtualized extends HTMLElement {
           this.textarea.value = index !== -1 ? text.substring(0, index) : text
           this.upperVirtualizedText = ''
           this.lowerVirtualizedText = index !== -1 ? text.substring(index) : ''
+          setTimeout(() => {
+            this.container.scrollTo(0, 0)
+            this.textarea.scrollTo(0, 0)
+            this.textarea.selectionStart = 0
+            this.textarea.selectionEnd = event.shiftKey
+              ? Math.min(this.selectionEnd - this.upp.length, this.textarea.value.length)
+              : this.textarea.value.length
+          })
         }
         return
 
@@ -166,6 +174,14 @@ class TextareaVirtualized extends HTMLElement {
           this.textarea.value = index !== -1 ? text.substring(index) : text
           this.upperVirtualizedText = index !== -1 ? text.substring(0, index) : ''
           this.lowerVirtualizedText = ''
+          setTimeout(() => {
+            this.container.scrollTo(0, this.LINE_HEIGHT * (this.ROWS * this.ROWS_MAG))
+            this.textarea.scrollBy(0, this.LINE_HEIGHT)
+            this.textarea.selectionStart = event.shiftKey
+              ? Math.max(this.selectionStart - this.upperVirtualizedText.length, 0)
+              : this.textarea.value.length
+            this.textarea.selectionEnd = this.textarea.value.length
+          })
         }
         return
 
