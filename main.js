@@ -159,8 +159,8 @@ class TextareaVirtualized extends HTMLElement {
             this.textarea.scrollTo(0, 0)
             this.textarea.selectionStart = 0
             this.textarea.selectionEnd = event.shiftKey
-              ? Math.min(this.selectionEnd - this.upp.length, this.textarea.value.length)
-              : this.textarea.value.length
+              ? Math.min(this.selectionEnd - this.upperVirtualizedText.length, this.textarea.value.length)
+              : 0
           })
         }
         return
