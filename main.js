@@ -123,6 +123,8 @@ class TextareaVirtualized extends HTMLElement {
       this.lowerVirtualizedText = text.substring(index) + this.lowerVirtualizedText
       this.container.scrollBy(0, this.LINE_HEIGHT * this.MARGINS * this.MARGINS_MAG)
       this.textarea.scrollBy(0, -1 * this.LINE_HEIGHT)
+      this.textarea.selectionStart = Math.max(this.selectionStart - this.upperVirtualizedText.length, 0)
+      this.textarea.selectionEnd = Math.max(this.selectionEnd - this.upperVirtualizedText.length, 0)
       return
     }
   }
@@ -139,6 +141,8 @@ class TextareaVirtualized extends HTMLElement {
       this.upperVirtualizedText = this.upperVirtualizedText + text.substring(0 ,index)
       this.container.scrollBy(0, -1 * this.LINE_HEIGHT * (this.MARGINS * this.MARGINS_MAG - 1))
       this.textarea.scrollBy(0, this.LINE_HEIGHT)
+      this.textarea.selectionStart = Math.max(this.selectionStart - this.upperVirtualizedText.length, 0)
+      this.textarea.selectionEnd = Math.max(this.selectionEnd - this.upperVirtualizedText.length, 0)
       return
     }
   }
@@ -147,8 +151,10 @@ class TextareaVirtualized extends HTMLElement {
     switch (event.key) {
       case 'ArrowUp':
         if (event.metaKey) {
-          this.selectionStart = this.upperVirtualizedText.length + this.textarea.selectionStart
-          this.selectionEnd = this.upperVirtualizedText.length + this.textarea.selectionEnd
+          this.selectionStart = 0
+          this.selectionEnd = event.shiftKey
+            ? this.upperVirtualizedText.length + this.textarea.selectionEnd
+            : 0
           const text = this.upperVirtualizedText + this.textarea.value + this.lowerVirtualizedText
           const index = indexOf(text, '\n', this.ROWS * this.ROWS_MAG)
           this.textarea.value = index !== -1 ? text.substring(0, index) : text
@@ -157,7 +163,7 @@ class TextareaVirtualized extends HTMLElement {
           setTimeout(() => {
             this.container.scrollTo(0, 0)
             this.textarea.scrollTo(0, 0)
-            this.textarea.selectionStart = 0
+            this.textarea.selectionStart = this.selectionStart
             this.textarea.selectionEnd = event.shiftKey
               ? Math.min(this.selectionEnd - this.upperVirtualizedText.length, this.textarea.value.length)
               : 0
@@ -167,8 +173,10 @@ class TextareaVirtualized extends HTMLElement {
 
       case 'ArrowDown':
         if (event.metaKey) {
-          this.selectionStart = this.upperVirtualizedText.length + this.textarea.selectionStart
-          this.selectionEnd = this.upperVirtualizedText.length + this.textarea.selectionEnd
+          this.selectionStart = event.shiftKey
+            ? this.upperVirtualizedText.length + this.textarea.selectionStart
+            : this.upperVirtualizedText.length + this.textarea.value.length + this.lowerVirtualizedText.length
+          this.selectionEnd = this.upperVirtualizedText.length + this.textarea.value.length + this.lowerVirtualizedText.length
           const text = this.upperVirtualizedText + this.textarea.value + this.lowerVirtualizedText
           const index = lastIndexOf(text, '\n', this.ROWS * this.ROWS_MAG)
           this.textarea.value = index !== -1 ? text.substring(index) : text
