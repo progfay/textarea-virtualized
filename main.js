@@ -123,8 +123,8 @@ class TextareaVirtualized extends HTMLElement {
       this.lowerVirtualizedText = text.substring(index) + this.lowerVirtualizedText
       this.container.scrollBy(0, this.LINE_HEIGHT * this.MARGINS * this.MARGINS_MAG)
       this.textarea.scrollBy(0, -1 * this.LINE_HEIGHT)
-      this.textarea.selectionStart = Math.max(this.selectionStart - this.upperVirtualizedText.length, 0)
-      this.textarea.selectionEnd = Math.max(this.selectionEnd - this.upperVirtualizedText.length, 0)
+      this.textarea.selectionStart = Math.min(Math.max(this.selectionStart - this.upperVirtualizedText.length, 0), this.textarea.value.length)
+      this.textarea.selectionEnd = Math.min(Math.max(this.selectionEnd - this.upperVirtualizedText.length, 0), this.textarea.value.length)
       return
     }
   }
@@ -141,14 +141,22 @@ class TextareaVirtualized extends HTMLElement {
       this.upperVirtualizedText = this.upperVirtualizedText + text.substring(0 ,index)
       this.container.scrollBy(0, -1 * this.LINE_HEIGHT * (this.MARGINS * this.MARGINS_MAG - 1))
       this.textarea.scrollBy(0, this.LINE_HEIGHT)
-      this.textarea.selectionStart = Math.max(this.selectionStart - this.upperVirtualizedText.length, 0)
-      this.textarea.selectionEnd = Math.max(this.selectionEnd - this.upperVirtualizedText.length, 0)
+      this.textarea.selectionStart = Math.min(Math.max(this.selectionStart - this.upperVirtualizedText.length, 0), this.textarea.value.length)
+      this.textarea.selectionEnd = Math.min(Math.max(this.selectionEnd - this.upperVirtualizedText.length, 0), this.textarea.value.length)
       return
     }
   }
 
   onKeyDown(event) {
     switch (event.key) {
+      case 'a':
+        if (event.metaKey) {
+          this.selectionStart = 0
+          this.selectionEnd = this.upperVirtualizedText.length + this.textarea.value.length + this.lowerVirtualizedText.length
+        }
+        return
+
+
       case 'ArrowUp':
         if (event.metaKey) {
           this.selectionStart = 0
