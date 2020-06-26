@@ -152,53 +152,62 @@ class TextareaVirtualized extends HTMLElement {
   }
 
   onKeyDown (event) {
+    if (event.metaKey) {
+      this.onKeyDownWithMetaKey(event)
+      return
+    }
+
     switch (event.key) {
-      case 'a':
-        if (event.metaKey) {
-          this.selectionStart = 0
-          this.selectionEnd = this.upperVirtualizedText.length + this.textarea.value.length + this.lowerVirtualizedText.length
-        }
+      default:
         break
+    }
+  }
 
-      case 'ArrowUp':
-        if (event.metaKey) {
-          this.selectionStart = 0
-          this.selectionEnd = event.shiftKey
-            ? this.upperVirtualizedText.length + this.textarea.selectionEnd
-            : 0
-          const text = this.upperVirtualizedText + this.textarea.value + this.lowerVirtualizedText
-          const index = indexOf(text, '\n', ROWS * ROWS_MAG)
-          this.textarea.value = index !== -1 ? text.substring(0, index) : text
-          this.upperVirtualizedText = ''
-          this.lowerVirtualizedText = index !== -1 ? text.substring(index) : ''
-          this.container.scrollTo(0, 0)
-          this.textarea.scrollTo(0, 0)
-          this.textarea.selectionStart = this.selectionStart
-          this.textarea.selectionEnd = event.shiftKey
-            ? Math.min(this.selectionEnd - this.upperVirtualizedText.length, this.textarea.value.length)
-            : 0
-        }
+  onKeyDownWithMetaKey (event) {
+    switch (event.key) {
+      case 'a': {
+        this.selectionStart = 0
+        this.selectionEnd = this.upperVirtualizedText.length + this.textarea.value.length + this.lowerVirtualizedText.length
         break
+      }
 
-      case 'ArrowDown':
-        if (event.metaKey) {
-          this.selectionStart = event.shiftKey
-            ? this.upperVirtualizedText.length + this.textarea.selectionStart
-            : this.upperVirtualizedText.length + this.textarea.value.length + this.lowerVirtualizedText.length
-          this.selectionEnd = this.upperVirtualizedText.length + this.textarea.value.length + this.lowerVirtualizedText.length
-          const text = this.upperVirtualizedText + this.textarea.value + this.lowerVirtualizedText
-          const index = lastIndexOf(text, '\n', ROWS * ROWS_MAG)
-          this.textarea.value = index !== -1 ? text.substring(index) : text
-          this.upperVirtualizedText = index !== -1 ? text.substring(0, index) : ''
-          this.lowerVirtualizedText = ''
-          this.container.scrollTo(0, this.lineHeight * (ROWS * ROWS_MAG))
-          this.textarea.scrollBy(0, this.lineHeight)
-          this.textarea.selectionStart = event.shiftKey
-            ? Math.max(this.selectionStart - this.upperVirtualizedText.length, 0)
-            : this.textarea.value.length
-          this.textarea.selectionEnd = this.textarea.value.length
-        }
+      case 'ArrowUp': {
+        this.selectionStart = 0
+        this.selectionEnd = event.shiftKey
+          ? this.upperVirtualizedText.length + this.textarea.selectionEnd
+          : 0
+        const text = this.upperVirtualizedText + this.textarea.value + this.lowerVirtualizedText
+        const index = indexOf(text, '\n', ROWS * ROWS_MAG)
+        this.textarea.value = index !== -1 ? text.substring(0, index) : text
+        this.upperVirtualizedText = ''
+        this.lowerVirtualizedText = index !== -1 ? text.substring(index) : ''
+        this.container.scrollTo(0, 0)
+        this.textarea.scrollTo(0, 0)
+        this.textarea.selectionStart = this.selectionStart
+        this.textarea.selectionEnd = event.shiftKey
+          ? Math.min(this.selectionEnd - this.upperVirtualizedText.length, this.textarea.value.length)
+          : 0
         break
+      }
+
+      case 'ArrowDown': {
+        this.selectionStart = event.shiftKey
+          ? this.upperVirtualizedText.length + this.textarea.selectionStart
+          : this.upperVirtualizedText.length + this.textarea.value.length + this.lowerVirtualizedText.length
+        this.selectionEnd = this.upperVirtualizedText.length + this.textarea.value.length + this.lowerVirtualizedText.length
+        const text = this.upperVirtualizedText + this.textarea.value + this.lowerVirtualizedText
+        const index = lastIndexOf(text, '\n', ROWS * ROWS_MAG)
+        this.textarea.value = index !== -1 ? text.substring(index) : text
+        this.upperVirtualizedText = index !== -1 ? text.substring(0, index) : ''
+        this.lowerVirtualizedText = ''
+        this.container.scrollTo(0, this.lineHeight * (ROWS * ROWS_MAG))
+        this.textarea.scrollBy(0, this.lineHeight)
+        this.textarea.selectionStart = event.shiftKey
+          ? Math.max(this.selectionStart - this.upperVirtualizedText.length, 0)
+          : this.textarea.value.length
+        this.textarea.selectionEnd = this.textarea.value.length
+        break
+      }
 
       default:
         break
