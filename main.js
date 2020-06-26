@@ -1,3 +1,5 @@
+/* global HTMLElement IntersectionObserver customElements */
+
 const ROWS = 30
 const ROWS_MAG = 10 // > 1.0
 const MARGINS = 10 // < ROWS
@@ -11,30 +13,29 @@ document.getElementById('textarea-original').value = text
 
 const indexOf = (text, target, count) => {
   let index = -1
-    for (let i = 0; i < count; i++) {
-      index = text.indexOf(target, index + 1)
-      if (index === -1) return -1
-    }
-    return index
+  for (let i = 0; i < count; i++) {
+    index = text.indexOf(target, index + 1)
+    if (index === -1) return -1
+  }
+  return index
 }
 
 const lastIndexOf = (text, target, count) => {
   let index = text.length
-    for (let i = 0; i < count; i++) {
-      index = text.lastIndexOf(target, index - 1)
-      if (index === -1) return -1
-    }
-    return index
+  for (let i = 0; i < count; i++) {
+    index = text.lastIndexOf(target, index - 1)
+    if (index === -1) return -1
+  }
+  return index
 }
 
 class TextareaVirtualized extends HTMLElement {
-
   constructor () {
     super()
 
     this.lineHeight = LINE_HEIGHT
 
-    this.shadow = this.attachShadow({mode: 'closed'})
+    this.shadow = this.attachShadow({ mode: 'closed' })
     const style = document.createElement('style')
     style.textContent = `
       * {
@@ -105,8 +106,8 @@ class TextareaVirtualized extends HTMLElement {
     this.textarea.value = text.substring(0, index)
     this.lowerVirtualizedText = text.substring(index)
 
-      this.selectionStart = 0
-      this.selectionEnd = 0
+    this.selectionStart = 0
+    this.selectionEnd = 0
 
     this.upperTextareaIntersectionObserver = new IntersectionObserver(this.upperIntersectionCallback.bind(this), { root: this.container })
     this.lowerTextareaIntersectionObserver = new IntersectionObserver(this.lowerIntersectionCallback.bind(this), { root: this.container })
@@ -114,7 +115,7 @@ class TextareaVirtualized extends HTMLElement {
     this.textarea.addEventListener('keydown', this.onKeyDown.bind(this))
   }
 
-  upperIntersectionCallback(entries) {
+  upperIntersectionCallback (entries) {
     for (const entry of entries) {
       if (!entry.isIntersecting) return
       if (this.upperVirtualizedText === '') return
@@ -132,7 +133,7 @@ class TextareaVirtualized extends HTMLElement {
     }
   }
 
-  lowerIntersectionCallback(entries) {
+  lowerIntersectionCallback (entries) {
     for (const entry of entries) {
       if (!entry.isIntersecting) return
       if (this.lowerVirtualizedText === '') return
@@ -141,7 +142,7 @@ class TextareaVirtualized extends HTMLElement {
       this.lowerVirtualizedText = lowerIndex !== -1 ? this.lowerVirtualizedText.substring(lowerIndex) : ''
       const index = lastIndexOf(text, '\n', ROWS * ROWS_MAG)
       this.textarea.value = text.substring(index)
-      this.upperVirtualizedText = this.upperVirtualizedText + text.substring(0 ,index)
+      this.upperVirtualizedText = this.upperVirtualizedText + text.substring(0, index)
       this.container.scrollBy(0, -1 * this.lineHeight * (MARGINS * MARGINS_MAG - 1))
       this.textarea.scrollBy(0, this.lineHeight)
       this.textarea.selectionStart = Math.min(Math.max(this.selectionStart - this.upperVirtualizedText.length, 0), this.textarea.value.length)
@@ -150,15 +151,14 @@ class TextareaVirtualized extends HTMLElement {
     }
   }
 
-  onKeyDown(event) {
+  onKeyDown (event) {
     switch (event.key) {
       case 'a':
         if (event.metaKey) {
           this.selectionStart = 0
           this.selectionEnd = this.upperVirtualizedText.length + this.textarea.value.length + this.lowerVirtualizedText.length
         }
-        return
-
+        break
 
       case 'ArrowUp':
         if (event.metaKey) {
@@ -178,7 +178,7 @@ class TextareaVirtualized extends HTMLElement {
             ? Math.min(this.selectionEnd - this.upperVirtualizedText.length, this.textarea.value.length)
             : 0
         }
-        return
+        break
 
       case 'ArrowDown':
         if (event.metaKey) {
@@ -198,14 +198,14 @@ class TextareaVirtualized extends HTMLElement {
             : this.textarea.value.length
           this.textarea.selectionEnd = this.textarea.value.length
         }
-        return
+        break
 
-        default:
-        return
+      default:
+        break
     }
   }
 
-  connectedCallback() {
+  connectedCallback () {
     this.lineHeight = this.textarea.getBoundingClientRect().height / (ROWS * ROWS_MAG)
     this.container.style.setProperty('height', `${ROWS * this.lineHeight}px`)
     this.upperTextareaIntersectionObserver.observe(this.upper)
