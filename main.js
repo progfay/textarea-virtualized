@@ -108,10 +108,12 @@ class TextareaVirtualized extends HTMLElement {
 
     this.selectionStart = 0
     this.selectionEnd = 0
+    this.selectionAlreadyUpdated = 0
 
     this.upperTextareaIntersectionObserver = new IntersectionObserver(this.upperIntersectionCallback.bind(this), { root: this.container })
     this.lowerTextareaIntersectionObserver = new IntersectionObserver(this.lowerIntersectionCallback.bind(this), { root: this.container })
 
+    this.textarea.addEventListener('select', this.onSelect.bind(this))
     this.textarea.addEventListener('keydown', this.onKeyDown.bind(this))
   }
 
@@ -129,6 +131,7 @@ class TextareaVirtualized extends HTMLElement {
       this.textarea.scrollBy(0, -1 * this.lineHeight)
       this.textarea.selectionStart = Math.min(Math.max(this.selectionStart - this.upperVirtualizedText.length, 0), this.textarea.value.length)
       this.textarea.selectionEnd = Math.min(Math.max(this.selectionEnd - this.upperVirtualizedText.length, 0), this.textarea.value.length)
+      this.selectionAlreadyUpdated += 2
       return
     }
   }
@@ -147,7 +150,30 @@ class TextareaVirtualized extends HTMLElement {
       this.textarea.scrollBy(0, this.lineHeight)
       this.textarea.selectionStart = Math.min(Math.max(this.selectionStart - this.upperVirtualizedText.length, 0), this.textarea.value.length)
       this.textarea.selectionEnd = Math.min(Math.max(this.selectionEnd - this.upperVirtualizedText.length, 0), this.textarea.value.length)
+      this.selectionAlreadyUpdated += 2
       return
+    }
+  }
+
+  onSelect (event) {
+    if (this.selectionAlreadyUpdated > 0) {
+      this.selectionAlreadyUpdated--
+      return
+    }
+
+    switch (this.textarea.selectionDirection) {
+      case 'forward':
+        this.selectionEnd = this.upperVirtualizedText.length + this.textarea.selectionEnd
+        break
+      case 'backward':
+        this.selectionStart = this.upperVirtualizedText.length + this.textarea.selectionStart
+        break
+      case 'none':
+        this.selectionStart = this.upperVirtualizedText.length + this.textarea.selectionStart
+        this.selectionEnd = this.upperVirtualizedText.length + this.textarea.selectionEnd
+        break
+      default:
+        break
     }
   }
 
@@ -187,6 +213,7 @@ class TextareaVirtualized extends HTMLElement {
         this.textarea.selectionEnd = event.shiftKey
           ? Math.min(this.selectionEnd - this.upperVirtualizedText.length, this.textarea.value.length)
           : 0
+        this.selectionAlreadyUpdated += 2
         break
       }
 
@@ -206,6 +233,7 @@ class TextareaVirtualized extends HTMLElement {
           ? Math.max(this.selectionStart - this.upperVirtualizedText.length, 0)
           : this.textarea.value.length
         this.textarea.selectionEnd = this.textarea.value.length
+        this.selectionAlreadyUpdated += 2
         break
       }
 
