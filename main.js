@@ -255,6 +255,7 @@ class TextareaVirtualized extends HTMLElement {
       }
 
       case 'ArrowLeft': {
+        if (this.textarea.selectionStart === this.textarea.selectionEnd) return
         const text = this.upperVirtualizedText + this.textarea.value + this.lowerVirtualizedText
         const selectionStartLineHead = (this.upperVirtualizedText + this.textarea.value).lastIndexOf('\n', this.selectionStart) + 1
         this.selectionStart = selectionStartLineHead
