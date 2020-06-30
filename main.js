@@ -11,8 +11,8 @@ const padLength = Math.log10(LINE_COUNTS) + 1
 const text = new Array(LINE_COUNTS).fill('').map((_, i) => i.toString().padStart(padLength, '0')).join('\n')
 document.getElementById('textarea-original').value = text
 
-const indexOf = (text, target, count) => {
-  let index = -1
+const indexOf = (text, target, count, offset) => {
+  let index = offset ? offset - 1 : -1
   for (let i = 0; i < count; i++) {
     index = text.indexOf(target, index + 1)
     if (index === -1) return -1
@@ -20,8 +20,8 @@ const indexOf = (text, target, count) => {
   return index
 }
 
-const lastIndexOf = (text, target, count) => {
-  let index = text.length
+const lastIndexOf = (text, target, count, offset) => {
+  let index = offset ? offset + 1 : text.length
   for (let i = 0; i < count; i++) {
     index = text.lastIndexOf(target, index - 1)
     if (index === -1) return -1
@@ -184,6 +184,23 @@ class TextareaVirtualized extends HTMLElement {
     }
 
     switch (event.key) {
+      case 'ArrowLeft': {
+        if (this.textarea.selectionStart === this.textarea.selectionEnd) return
+        event.preventDefault()
+        const text = this.upperVirtualizedText + this.textarea.value + this.lowerVirtualizedText
+        const indexOfStartTextarea = Math.max(lastIndexOf(text, '\n', Math.floor(ROWS * ROWS_MAG * 0.5), this.selectionStart), 0)
+        const indexOfEndTextarea = indexOf(text, '\n', ROWS * ROWS_MAG, indexOfStartTextarea)
+        this.upperVirtualizedText = text.substring(0, indexOfStartTextarea)
+        this.textarea.value = text.substring(indexOfStartTextarea, indexOfEndTextarea)
+        this.lowerVirtualizedText = text.substring(indexOfEndTextarea)
+        this.textarea.selectionStart = this.selectionStart - this.upperVirtualizedText.length
+        this.textarea.selectionEnd = this.textarea.selectionStart
+        this.selectionStart = this.textarea.selectionStart
+        this.selectionEnd = this.textarea.selectionEnd
+        this.container.scrollTo(0, this.lineHeight * Math.floor((this.textarea.value.substring(0, this.textarea.selectionStart).match(/\n/g) || []).length - ROWS * 0.5))
+        return
+      }
+
       default:
         break
     }
@@ -234,6 +251,22 @@ class TextareaVirtualized extends HTMLElement {
           : this.textarea.value.length
         this.textarea.selectionEnd = this.textarea.value.length
         this.selectionAlreadyUpdated += 2
+        break
+      }
+
+      case 'ArrowLeft': {
+        const text = this.upperVirtualizedText + this.textarea.value + this.lowerVirtualizedText
+        const selectionStartLineHead = (this.upperVirtualizedText + this.textarea.value).lastIndexOf('\n', this.selectionStart) + 1
+        this.selectionStart = selectionStartLineHead
+        this.selectionEnd = selectionStartLineHead
+        const indexOfStartTextarea = Math.max(lastIndexOf(text, '\n', Math.floor(ROWS * ROWS_MAG * 0.5), this.selectionStart), 0)
+        const indexOfEndTextarea = indexOf(text, '\n', ROWS * ROWS_MAG, indexOfStartTextarea)
+        this.upperVirtualizedText = text.substring(0, indexOfStartTextarea)
+        this.textarea.value = text.substring(indexOfStartTextarea, indexOfEndTextarea)
+        this.lowerVirtualizedText = text.substring(indexOfEndTextarea)
+        this.textarea.selectionStart = this.selectionStart - this.upperVirtualizedText.length
+        this.textarea.selectionEnd = this.textarea.selectionStart
+        this.container.scrollTo(0, this.lineHeight * Math.floor((this.textarea.value.substring(0, this.textarea.selectionStart).match(/\n/g) || []).length - ROWS * 0.5))
         break
       }
 
