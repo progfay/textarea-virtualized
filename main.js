@@ -271,6 +271,23 @@ class TextareaVirtualized extends HTMLElement {
         break
       }
 
+      case 'ArrowRight': {
+        if (this.textarea.selectionStart === this.textarea.selectionEnd) return
+        const text = this.upperVirtualizedText + this.textarea.value + this.lowerVirtualizedText
+        const selectionStartLineTail = (this.upperVirtualizedText + this.textarea.value).indexOf('\n', this.selectionStart)
+        this.selectionStart = selectionStartLineTail !== -1 ? selectionStartLineTail : this.upperVirtualizedText.length + this.textarea.value.length
+        this.selectionEnd = this.selectionStart
+        const indexOfStartTextarea = Math.max(lastIndexOf(text, '\n', Math.floor(ROWS * ROWS_MAG * 0.5), this.selectionStart), 0)
+        const indexOfEndTextarea = indexOf(text, '\n', ROWS * ROWS_MAG, indexOfStartTextarea)
+        this.upperVirtualizedText = text.substring(0, indexOfStartTextarea)
+        this.textarea.value = text.substring(indexOfStartTextarea, indexOfEndTextarea)
+        this.lowerVirtualizedText = text.substring(indexOfEndTextarea)
+        this.textarea.selectionStart = this.selectionStart - this.upperVirtualizedText.length
+        this.textarea.selectionEnd = this.textarea.selectionStart
+        this.container.scrollTo(0, this.lineHeight * Math.floor((this.textarea.value.substring(0, this.textarea.selectionStart).match(/\n/g) || []).length - ROWS * 0.5))
+        break
+      }
+
       default:
         break
     }
