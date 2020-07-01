@@ -11,8 +11,8 @@ const padLength = Math.log10(LINE_COUNTS) + 1
 const text = new Array(LINE_COUNTS).fill('').map((_, i) => i.toString().padStart(padLength, '0')).join('\n')
 document.getElementById('textarea-original').value = text
 
-const indexOf = (text, target, count, offset) => {
-  let index = offset ? offset - 1 : -1
+const indexOf = (text, target, count, offset = 0) => {
+  let index = offset - 1
   for (let i = 0; i < count; i++) {
     index = text.indexOf(target, index + 1)
     if (index === -1) return -1
@@ -20,8 +20,8 @@ const indexOf = (text, target, count, offset) => {
   return index
 }
 
-const lastIndexOf = (text, target, count, offset) => {
-  let index = offset ? offset + 1 : text.length
+const lastIndexOf = (text, target, count, offset = text.length - 1) => {
+  let index = offset + 1
   for (let i = 0; i < count; i++) {
     index = text.lastIndexOf(target, index - 1)
     if (index === -1) return -1
