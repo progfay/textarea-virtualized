@@ -198,7 +198,7 @@ class TextareaVirtualized extends HTMLElement {
         this.selectionStart = this.textarea.selectionStart
         this.selectionEnd = this.textarea.selectionEnd
         this.container.scrollTo(0, this.lineHeight * Math.floor((this.textarea.value.substring(0, this.textarea.selectionStart).match(/\n/g) || []).length - ROWS * 0.5))
-        return
+        break
       }
 
       default:
