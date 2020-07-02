@@ -131,7 +131,7 @@ class TextareaVirtualized extends HTMLElement {
       this.textarea.value = text.substring(0, indexOfEndTextarea)
       this.lowerVirtualizedText = text.substring(indexOfEndTextarea) + this.lowerVirtualizedText
       this.container.scrollBy(0, this.lineHeight * MARGINS * MARGINS_MAG)
-      this.textarea.scrollBy(0, -1 * this.lineHeight)
+      this.textarea.scrollTo(0, 0)
       this.textarea.selectionStart = Math.min(Math.max(this.selectionStart - this.upperVirtualizedText.length, 0), this.textarea.value.length)
       this.textarea.selectionEnd = Math.min(Math.max(this.selectionEnd - this.upperVirtualizedText.length, 0), this.textarea.value.length)
       this.selectionAlreadyUpdated += 2
@@ -205,6 +205,7 @@ class TextareaVirtualized extends HTMLElement {
         this.selectionStart = this.textarea.selectionStart
         this.selectionEnd = this.textarea.selectionEnd
         this.container.scrollTo(0, this.lineHeight * Math.floor((this.textarea.value.substring(0, this.textarea.selectionStart).match(/\n/g) || []).length - ROWS * 0.5))
+        this.textarea.scrollTo(0, 0)
         break
       }
 
@@ -299,6 +300,7 @@ class TextareaVirtualized extends HTMLElement {
         this.textarea.selectionStart = this.selectionStart - this.upperVirtualizedText.length
         this.textarea.selectionEnd = this.textarea.selectionStart
         this.container.scrollTo(0, this.lineHeight * Math.floor((this.textarea.value.substring(0, this.textarea.selectionStart).match(/\n/g) || []).length - ROWS * 0.5))
+        this.textarea.scrollTo(0, 0)
         break
       }
 
@@ -318,6 +320,7 @@ class TextareaVirtualized extends HTMLElement {
         this.textarea.selectionStart = this.selectionStart - this.upperVirtualizedText.length
         this.textarea.selectionEnd = this.textarea.selectionStart
         this.container.scrollTo(0, this.lineHeight * Math.floor((this.textarea.value.substring(0, this.textarea.selectionStart).match(/\n/g) || []).length - ROWS * 0.5))
+        this.textarea.scrollTo(0, 0)
         break
       }
 
