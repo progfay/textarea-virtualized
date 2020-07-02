@@ -101,10 +101,11 @@ class TextareaVirtualized extends HTMLElement {
     // const text = this.value
     // const text = text // (use global variable)
 
-    const index = indexOf(text, '\n', ROWS * ROWS_MAG)
+    const end = indexOf(text, '\n', ROWS * ROWS_MAG)
+    const indexOfEndTextarea = end !== -1 ? end : text.length
     this.upperVirtualizedText = ''
-    this.textarea.value = text.substring(0, index)
-    this.lowerVirtualizedText = text.substring(index)
+    this.textarea.value = text.substring(0, indexOfEndTextarea)
+    this.lowerVirtualizedText = text.substring(indexOfEndTextarea)
 
     this.selectionStart = 0
     this.selectionEnd = 0
@@ -121,12 +122,14 @@ class TextareaVirtualized extends HTMLElement {
     for (const entry of entries) {
       if (!entry.isIntersecting) return
       if (this.upperVirtualizedText === '') return
-      const upperIndex = lastIndexOf(this.upperVirtualizedText, '\n', MARGINS * MARGINS_MAG)
-      const text = (upperIndex !== -1 ? this.upperVirtualizedText.substring(upperIndex) : this.upperVirtualizedText) + this.textarea.value
-      this.upperVirtualizedText = upperIndex !== -1 ? this.upperVirtualizedText.substring(0, upperIndex) : ''
-      const index = indexOf(text, '\n', ROWS * ROWS_MAG)
-      this.textarea.value = text.substring(0, index)
-      this.lowerVirtualizedText = text.substring(index) + this.lowerVirtualizedText
+      const start = lastIndexOf(this.upperVirtualizedText, '\n', MARGINS * MARGINS_MAG)
+      const indexOfStartTextarea = start !== -1 ? start : 0
+      const text = this.upperVirtualizedText.substring(indexOfStartTextarea) + this.textarea.value
+      this.upperVirtualizedText = this.upperVirtualizedText.substring(0, indexOfStartTextarea)
+      const end = indexOf(text, '\n', ROWS * ROWS_MAG)
+      const indexOfEndTextarea = end !== -1 ? end : text.length
+      this.textarea.value = text.substring(0, indexOfEndTextarea)
+      this.lowerVirtualizedText = text.substring(indexOfEndTextarea) + this.lowerVirtualizedText
       this.container.scrollBy(0, this.lineHeight * MARGINS * MARGINS_MAG)
       this.textarea.scrollBy(0, -1 * this.lineHeight)
       this.textarea.selectionStart = Math.min(Math.max(this.selectionStart - this.upperVirtualizedText.length, 0), this.textarea.value.length)
@@ -140,12 +143,14 @@ class TextareaVirtualized extends HTMLElement {
     for (const entry of entries) {
       if (!entry.isIntersecting) return
       if (this.lowerVirtualizedText === '') return
-      const lowerIndex = indexOf(this.lowerVirtualizedText, '\n', MARGINS * MARGINS_MAG)
-      const text = this.textarea.value + (lowerIndex !== -1 ? this.lowerVirtualizedText.substring(0, lowerIndex) : this.lowerVirtualizedText)
+      const end = indexOf(this.lowerVirtualizedText, '\n', MARGINS * MARGINS_MAG)
+      const indexOfEndTextarea = end !== -1 ? end : this.lowerVirtualizedText.length
+      const text = this.textarea.value + this.lowerVirtualizedText.substring(0, indexOfEndTextarea)
       this.lowerVirtualizedText = lowerIndex !== -1 ? this.lowerVirtualizedText.substring(lowerIndex) : ''
-      const index = lastIndexOf(text, '\n', ROWS * ROWS_MAG)
-      this.textarea.value = text.substring(index)
-      this.upperVirtualizedText = this.upperVirtualizedText + text.substring(0, index)
+      const start = lastIndexOf(text, '\n', ROWS * ROWS_MAG)
+      const indexOfStartTextarea = start !== -1 ? start : 0
+      this.textarea.value = text.substring(indexOfStartTextarea)
+      this.upperVirtualizedText = this.upperVirtualizedText + text.substring(0, indexOfStartTextarea)
       this.container.scrollBy(0, -1 * this.lineHeight * (MARGINS * MARGINS_MAG - 1))
       this.textarea.scrollBy(0, this.lineHeight)
       this.textarea.selectionStart = Math.min(Math.max(this.selectionStart - this.upperVirtualizedText.length, 0), this.textarea.value.length)
@@ -188,8 +193,10 @@ class TextareaVirtualized extends HTMLElement {
         if (this.textarea.selectionStart === this.textarea.selectionEnd) return
         event.preventDefault()
         const text = this.upperVirtualizedText + this.textarea.value + this.lowerVirtualizedText
-        const indexOfStartTextarea = Math.max(lastIndexOf(text, '\n', Math.floor(ROWS * ROWS_MAG * 0.5), this.selectionStart), 0)
-        const indexOfEndTextarea = indexOf(text, '\n', ROWS * ROWS_MAG, indexOfStartTextarea)
+        const start = lastIndexOf(text, '\n', Math.floor(ROWS * ROWS_MAG * 0.5), this.selectionStart)
+        const indexOfStartTextarea = start !== -1 ? start : 0
+        const end = indexOf(text, '\n', ROWS * ROWS_MAG, indexOfStartTextarea)
+        const indexOfEndTextarea = end !== -1 ? end : 0
         this.upperVirtualizedText = text.substring(0, indexOfStartTextarea)
         this.textarea.value = text.substring(indexOfStartTextarea, indexOfEndTextarea)
         this.lowerVirtualizedText = text.substring(indexOfEndTextarea)
@@ -240,10 +247,11 @@ class TextareaVirtualized extends HTMLElement {
           ? this.upperVirtualizedText.length + this.textarea.selectionEnd
           : 0
         const text = this.upperVirtualizedText + this.textarea.value + this.lowerVirtualizedText
-        const index = indexOf(text, '\n', ROWS * ROWS_MAG)
-        this.textarea.value = index !== -1 ? text.substring(0, index) : text
+        const end = indexOf(text, '\n', ROWS * ROWS_MAG)
+        const indexOfEndTextarea = end !== -1 ? end : text.length
+        this.textarea.value = text.substring(0, indexOfEndTextarea)
         this.upperVirtualizedText = ''
-        this.lowerVirtualizedText = index !== -1 ? text.substring(index) : ''
+        this.lowerVirtualizedText = text.substring(index)
         this.container.scrollTo(0, 0)
         this.textarea.scrollTo(0, 0)
         this.textarea.selectionStart = this.selectionStart
@@ -260,9 +268,10 @@ class TextareaVirtualized extends HTMLElement {
           : this.upperVirtualizedText.length + this.textarea.value.length + this.lowerVirtualizedText.length
         this.selectionEnd = this.upperVirtualizedText.length + this.textarea.value.length + this.lowerVirtualizedText.length
         const text = this.upperVirtualizedText + this.textarea.value + this.lowerVirtualizedText
-        const index = lastIndexOf(text, '\n', ROWS * ROWS_MAG)
-        this.textarea.value = index !== -1 ? text.substring(index) : text
-        this.upperVirtualizedText = index !== -1 ? text.substring(0, index) : ''
+        const start = lastIndexOf(text, '\n', ROWS * ROWS_MAG)
+        const indexOfStartTextarea = start !== -1 ? start : 0
+        this.textarea.value = text.substring(indexOfStartTextarea)
+        this.upperVirtualizedText = text.substring(0, indexOfStartTextarea)
         this.lowerVirtualizedText = ''
         this.container.scrollTo(0, this.lineHeight * (ROWS * ROWS_MAG))
         this.textarea.scrollBy(0, this.lineHeight)
@@ -277,11 +286,13 @@ class TextareaVirtualized extends HTMLElement {
       case 'ArrowLeft': {
         if (this.textarea.selectionStart === this.textarea.selectionEnd) return
         const text = this.upperVirtualizedText + this.textarea.value + this.lowerVirtualizedText
-        const selectionStartLineHead = (this.upperVirtualizedText + this.textarea.value).lastIndexOf('\n', this.selectionStart) + 1
-        this.selectionStart = selectionStartLineHead
-        this.selectionEnd = selectionStartLineHead
-        const indexOfStartTextarea = Math.max(lastIndexOf(text, '\n', Math.floor(ROWS * ROWS_MAG * 0.5), this.selectionStart), 0)
-        const indexOfEndTextarea = indexOf(text, '\n', ROWS * ROWS_MAG, indexOfStartTextarea)
+        const selectionStartLineTail = text.lastIndexOf('\n', this.selectionStart)
+        this.selectionStart = selectionStartLineTail !== -1 ? selectionStartLineTail : 0
+        this.selectionEnd = this.selectionStart
+        const start = lastIndexOf(text, '\n', Math.floor(ROWS * ROWS_MAG * 0.5), this.selectionStart)
+        const indexOfStartTextarea = start === -1 ? start : 0
+        const end = indexOf(text, '\n', ROWS * ROWS_MAG, indexOfStartTextarea)
+        const indexOfEndTextarea = end !== -1 ? end : text.length
         this.upperVirtualizedText = text.substring(0, indexOfStartTextarea)
         this.textarea.value = text.substring(indexOfStartTextarea, indexOfEndTextarea)
         this.lowerVirtualizedText = text.substring(indexOfEndTextarea)
@@ -294,11 +305,13 @@ class TextareaVirtualized extends HTMLElement {
       case 'ArrowRight': {
         if (this.textarea.selectionStart === this.textarea.selectionEnd) return
         const text = this.upperVirtualizedText + this.textarea.value + this.lowerVirtualizedText
-        const selectionStartLineTail = (this.upperVirtualizedText + this.textarea.value).indexOf('\n', this.selectionStart)
-        this.selectionStart = selectionStartLineTail !== -1 ? selectionStartLineTail : this.upperVirtualizedText.length + this.textarea.value.length
+        const selectionStartLineTail = text.indexOf('\n', this.selectionStart)
+        this.selectionStart = selectionStartLineTail !== -1 ? selectionStartLineTail : (this.upperVirtualizedText.length + this.textarea.value.length)
         this.selectionEnd = this.selectionStart
-        const indexOfStartTextarea = Math.max(lastIndexOf(text, '\n', Math.floor(ROWS * ROWS_MAG * 0.5), this.selectionStart), 0)
-        const indexOfEndTextarea = indexOf(text, '\n', ROWS * ROWS_MAG, indexOfStartTextarea)
+        const start = lastIndexOf(text, '\n', Math.floor(ROWS * ROWS_MAG * 0.5), this.selectionStart)
+        const indexOfStartTextarea = start !== -1 ? start : 0
+        const end = indexOf(text, '\n', ROWS * ROWS_MAG, indexOfStartTextarea)
+        const indexOfEndTextarea = end !== -1 ? end : text.length
         this.upperVirtualizedText = text.substring(0, indexOfStartTextarea)
         this.textarea.value = text.substring(indexOfStartTextarea, indexOfEndTextarea)
         this.lowerVirtualizedText = text.substring(indexOfEndTextarea)
