@@ -288,7 +288,7 @@ class TextareaVirtualized extends HTMLElement {
         if (this.selectionStart === this.selectionEnd) return
         const text = this.upperVirtualizedText + this.textarea.value + this.lowerVirtualizedText
         const selectionStartLineTail = text.lastIndexOf('\n', this.selectionStart)
-        this.selectionStart = selectionStartLineTail !== -1 ? selectionStartLineTail : 0
+        this.selectionStart = selectionStartLineTail !== -1 ? selectionStartLineTail + 1 : 0
         this.selectionEnd = this.selectionStart
         const start = lastIndexOf(text, '\n', Math.floor(ROWS * ROWS_MAG * 0.5), this.selectionStart)
         const indexOfStartTextarea = start === -1 ? start : 0
