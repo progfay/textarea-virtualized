@@ -146,7 +146,7 @@ class TextareaVirtualized extends HTMLElement {
       const end = indexOf(this.lowerVirtualizedText, '\n', MARGINS * MARGINS_MAG)
       const indexOfEndTextarea = end !== -1 ? end : this.lowerVirtualizedText.length
       const text = this.textarea.value + this.lowerVirtualizedText.substring(0, indexOfEndTextarea)
-      this.lowerVirtualizedText = lowerIndex !== -1 ? this.lowerVirtualizedText.substring(lowerIndex) : ''
+      this.lowerVirtualizedText = this.lowerVirtualizedText.substring(indexOfEndTextarea)
       const start = lastIndexOf(text, '\n', ROWS * ROWS_MAG)
       const indexOfStartTextarea = start !== -1 ? start : 0
       this.textarea.value = text.substring(indexOfStartTextarea)
