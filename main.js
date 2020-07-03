@@ -190,7 +190,7 @@ class TextareaVirtualized extends HTMLElement {
 
     switch (event.key) {
       case 'ArrowLeft': {
-        if (this.textarea.selectionStart === this.textarea.selectionEnd) return
+        if (this.selectionStart === this.selectionEnd) return
         event.preventDefault()
         const text = this.upperVirtualizedText + this.textarea.value + this.lowerVirtualizedText
         const start = lastIndexOf(text, '\n', Math.floor(ROWS * ROWS_MAG * 0.5), this.selectionStart)
@@ -210,7 +210,7 @@ class TextareaVirtualized extends HTMLElement {
       }
 
       case 'ArrowRight': {
-        if (this.textarea.selectionStart === this.textarea.selectionEnd) return
+        if (this.selectionStart === this.selectionEnd) return
         event.preventDefault()
         const text = this.upperVirtualizedText + this.textarea.value + this.lowerVirtualizedText
         const end = indexOf(text, '\n', Math.floor(ROWS * ROWS_MAG * 0.5), this.selectionEnd)
@@ -285,7 +285,7 @@ class TextareaVirtualized extends HTMLElement {
       }
 
       case 'ArrowLeft': {
-        if (this.textarea.selectionStart === this.textarea.selectionEnd) return
+        if (this.selectionStart === this.selectionEnd) return
         const text = this.upperVirtualizedText + this.textarea.value + this.lowerVirtualizedText
         const selectionStartLineTail = text.lastIndexOf('\n', this.selectionStart)
         this.selectionStart = selectionStartLineTail !== -1 ? selectionStartLineTail : 0
@@ -305,7 +305,7 @@ class TextareaVirtualized extends HTMLElement {
       }
 
       case 'ArrowRight': {
-        if (this.textarea.selectionStart === this.textarea.selectionEnd) return
+        if (this.selectionStart === this.selectionEnd) return
         const text = this.upperVirtualizedText + this.textarea.value + this.lowerVirtualizedText
         const selectionStartLineTail = text.indexOf('\n', this.selectionStart)
         this.selectionStart = selectionStartLineTail !== -1 ? selectionStartLineTail : (this.upperVirtualizedText.length + this.textarea.value.length)
